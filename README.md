@@ -1,4 +1,4 @@
-mux
+mux [![Build Status](https://travis-ci.org/boourns/mux.svg?branch=master)](https://travis-ci.org/boourns/mux)
 ===
 
 broadcast from many input channels to many output channels in Go
