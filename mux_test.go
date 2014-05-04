@@ -5,7 +5,7 @@ import (
 )
 
 func TestDoubleSendAndReceive(t *testing.T) {
-	m := New()
+	m := New(nil)
 	out1 := make(chan interface{}, 1)
 	out2 := make(chan interface{}, 1)
 
@@ -42,7 +42,7 @@ func TestDoubleSendAndReceive(t *testing.T) {
 }
 
 func TestRemovingOutput(t *testing.T) {
-	m := New()
+	m := New(nil)
 	out1 := make(chan interface{}, 1)
 	out2 := make(chan interface{}, 1)
 	out3 := make(chan interface{}, 1)
@@ -70,7 +70,7 @@ func TestRemovingOutput(t *testing.T) {
 }
 
 func TestRemovingInput(t *testing.T) {
-	m := New()
+	m := New(nil)
 	out1 := make(chan interface{}, 1)
 
 	in1 := make(chan interface{}, 1)
@@ -89,4 +89,26 @@ func TestRemovingInput(t *testing.T) {
 		t.Fatalf("did not receive expected from input, got %v\n", o)
 	}
 	m.Shutdown()
+}
+
+func TestFilter(t *testing.T) {
+	m := New(func(msg interface{}) []interface{} {
+		output := make([]interface{}, 0)
+		if String(msg) == "ok" {
+			output = append(output, "no way")
+		}
+	 	return output
+        })
+
+	out1 := make(chan interface{}, 1)
+	in1 := make(chan interface{}, 1)
+	m.AddInput(in1)
+	m.AddOutput(out1)
+
+	in1 <- "lol"
+	in1 <- "ok"
+	o := <- out1
+	if (String(o) != "no way") {
+		t.Fatalf("Filtering did not work, received %v\n", o)
+	}
 }

@@ -27,10 +27,11 @@ type Mux struct {
 	outputs []chan interface{}
 	inputs  []input
 	control chan message
+	filter  func(interface{}) []interface{}
 }
 
-func New() *Mux {
-	mux := &Mux{control: make(chan message, 1), input: make(chan interface{}, 1)}
+func New(filter func(interface{}) []interface{}) *Mux {
+	mux := &Mux{control: make(chan message, 1), input: make(chan interface{}, 1), filter: filter}
 	go mux.run()
 	return mux
 }
@@ -39,8 +40,17 @@ func (m *Mux) run() {
 	for true {
 		select {
 		case msg := <-m.input:
-			for _, output := range m.outputs {
-				output <- msg
+			if m.filter != nil {
+				messages := m.filter(msg)
+				for _, message := range messages {
+					for _, output := range m.outputs {
+						output <- message
+					}
+				}
+			} else {
+				for _, output := range m.outputs {
+					output <- msg
+				}
 			}
 		case ctrl := <-m.control:
 			switch ctrl.msgType {
